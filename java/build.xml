@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+
+<project name="Main" default="build" basedir=".">
+
+  <condition property="main.class" value="${ant.project.name}">
+    <not>
+      <isset property="main.class"/>
+    </not>
+  </condition>
+  <property name="lib.dir" value ="./lib"/>
+  <path id="classpath">
+    <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    <fileset dir="${user.home}/april/java" includes="**/*.jar" />
+    <fileset dir="/usr/local/share/java" includes="**/*.jar" />
+  </path>
+  <!-- Build java -->
+  <target name="build" depends="clean, generate-lcmtypes,build-java"/>
+
+  <!-- Clean everything -->
+  <target name="clean" depends="clean-lcmtypes,clean-java"/>
+
+  <target name="clean-lcmtypes">
+    <exec executable="make" dir="${basedir}">
+      <arg line="-f Makefile.lcmgen clean" />
+    </exec>
+  </target>
+
+  <target name="generate-lcmtypes">
+    <exec executable="make" dir="${basedir}">
+      <arg line="-f Makefile.lcmgen" />
+    </exec>
+  </target>
+
+  <target name="build-java">
+    <mkdir dir="build"/>
+    <javac
+       srcdir="src"
+       includes="**/*.java"
+       debug="on"
+       optimize="off"
+       destdir="build"
+       classpathref="classpath"
+       compiler="extJavac"
+       deprecation="yes"
+       source="1.5"
+       target="1.5"
+       >
+    </javac>
+  </target>
+
+  <target name="jar" depends="build">
+    <jar destfile="build/${ant.project.name}.jar" basedir="build">
+      <manifest>
+        <attribute name="Main-Class" value="${main.class}"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="run" depends="jar">
+    <java fork="true" classname="${main.class}">
+      <sysproperty key="java.library.path" path="./lib:${java.library.path}"/>
+      <classpath>
+        <path refid="classpath"/>
+        <path location="build/${ant.project.name}.jar"/>
+      </classpath>
+      <arg value="${camera}" />
+    </java>
+  </target>
+
+  <target name="clean-java" >
+    <delete dir="build"/>
+  </target>
+
+</project>
